@@ -1,6 +1,8 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+import folium
+from streamlit_folium import st_folium
 
 # -------------------------
 # Verified Wind Speed Data
@@ -10,10 +12,20 @@ wind_profile = {
     "Indore": 5.46,     # WeatherSpark (June avg)
     "Jabalpur": 4.24,   # WeatherSpark (June avg)
 
-    # Older demo districts (keep until verified)
+    # Older demo districts (kept until verified)
     "Ratlam": 6.2,
     "Mandsaur": 5.8,
     "Dewas": 5.5
+}
+
+# Coordinates for districts
+district_coords = {
+    "Bhopal": [23.2599, 77.4126],
+    "Indore": [22.7196, 75.8577],
+    "Jabalpur": [23.1815, 79.9864],
+    "Ratlam": [23.3342, 75.0370],
+    "Mandsaur": [24.0722, 75.0699],
+    "Dewas": [22.9659, 76.0553]
 }
 
 # -------------------------
@@ -57,6 +69,21 @@ if page == "Dashboard":
     ax.set_title(f"Wind Profile – {district}")
     st.pyplot(fig)
 
+    # Map of Madhya Pradesh
+    st.subheader("🗺️ District Location Map")
+    mp_center = [23.5, 78.5]
+    m = folium.Map(location=mp_center, zoom_start=6)
+
+    # Add marker for selected district
+    if district in district_coords:
+        folium.Marker(
+            location=district_coords[district],
+            popup=f"{district} 🌬️ {avg_speed:.2f} m/s | ROI: {roi}%",
+            tooltip=f"{district} – {avg_speed:.2f} m/s"
+        ).add_to(m)
+
+    st_folium(m, width=700, height=500)
+
 # -------------------------
 # Data & Sources Page
 # -------------------------
@@ -73,13 +100,13 @@ elif page == "📖 Data & Sources":
       [WeatherSpark](https://weatherspark.com/y/109911/Average-Weather-in-Jabalpur-Madhya-Pradesh-India-Year-Round)
     """)
 
-    st.markdown("### 📘 Methodology (Simple)")
+    st.markdown("### 📘 Methodology (Simple for Everyone)")
     st.markdown("""
-    1. 🌬️ **Collect Data**: Wind speeds are taken from reliable sources like WeatherSpark, which uses NASA’s MERRA-2 models.  
-    2. 📊 **Find Averages**: We use long-term average wind speeds for each city.  
-    3. ⚡ **Estimate Power**: Stronger winds → more electricity potential.  
-    4. 💰 **ROI**: Higher wind = higher returns on investment.  
-    5. ✅ **Transparency**: All data sources are linked so anyone can verify.
+    1. 🌬️ **Collect Data**: Wind speeds are taken from trusted sites (WeatherSpark, powered by NASA's MERRA-2).  
+    2. 📊 **Find Averages**: Long-term average speeds are used for each city.  
+    3. ⚡ **Estimate Power**: Higher wind → more power potential.  
+    4. 💰 **ROI**: Return on Investment is calculated from wind strength.  
+    5. ✅ **Transparency**: All sources are linked so anyone can verify.
     """)
 
-    st.info("⚠️ Note: More districts will be added once verified data is available from IMD, NIWE, or other trusted sources.")
+    st.info("⚠️ More districts will be added once verified data is available from IMD, NIWE, or other government-backed sources.")
