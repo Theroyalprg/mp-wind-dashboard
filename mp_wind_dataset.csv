@@ -1,7 +1,7 @@
 District,Latitude,Longitude,Baseline_Wind_Speed(m/s),Baseline_Source,Realtime_API
-Bhopal,23.2599,77.4126,4.8,https://weatherspark.com/y/109103/Average-Weather-in-Bhopal-Madhya-Pradesh-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=23.2599&longitude=77.4126&hourly=windspeed_10m
-Indore,22.7196,75.8577,5.2,https://weatherspark.com/y/108259/Average-Weather-in-Indore-Madhya-Pradesh-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=22.7196&longitude=75.8577&hourly=windspeed_10m
-Jabalpur,23.1815,79.9864,4.5,https://weatherspark.com/y/109495/Average-Weather-in-Jabalpur-Madhya-Pradesh-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=23.1815&longitude=79.9864&hourly=windspeed_10m
-Ratlam,23.3303,75.0403,6.2,https://weatherspark.com/y/109574/Average-Weather-in-Ratlam-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=23.3303&longitude=75.0403&hourly=windspeed_10m
-Mandsaur,24.0722,75.0699,5.8,https://weatherspark.com/y/109535/Average-Weather-in-Mandsaur-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=24.0722&longitude=75.0699&hourly=windspeed_10m
-Dewas,22.9676,76.0534,5.5,https://weatherspark.com/y/109449/Average-Weather-in-Dewas-India-Year-Round,https://api.open-meteo.com/v1/forecast?latitude=22.9676&longitude=76.0534&hourly=windspeed_10m
+Bhopal,23.2599,77.4126,3.33,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=23.2599&longitude=77.4126&hourly=windspeed_10m"
+Indore,22.7196,75.8577,3.50,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=22.7196&longitude=75.8577&hourly=windspeed_10m"
+Jabalpur,23.1815,79.9500,3.60,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=23.1815&longitude=79.9500&hourly=windspeed_10m"
+Ratlam,23.3316,75.0603,3.40,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=23.3316&longitude=75.0603&hourly=windspeed_10m"
+Mandsaur,24.0701,75.0730,3.20,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=24.0701&longitude=75.0730&hourly=windspeed_10m"
+Dewas,22.9564,76.0393,3.30,IMD/NIWE,"https://api.open-meteo.com/v1/forecast?latitude=22.9564&longitude=76.0393&hourly=windspeed_10m"
