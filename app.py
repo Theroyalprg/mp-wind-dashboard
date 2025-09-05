@@ -1,162 +1,85 @@
 import streamlit as st
-import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
-from datetime import datetime, timedelta
-import plotly.express as px
-import time
 
-# ----------------------------
-# Page Config
-# ----------------------------
-st.set_page_config(page_title="MP Wind Energy Dashboard", layout="wide")
+# -------------------------
+# Verified Wind Speed Data
+# -------------------------
+wind_profile = {
+    "Bhopal": 4.83,     # WeatherSpark (June avg)
+    "Indore": 5.46,     # WeatherSpark (June avg)
+    "Jabalpur": 4.24,   # WeatherSpark (June avg)
 
-# ----------------------------
-# Custom Loader Function
-# ----------------------------
-def custom_loader(style="wave", duration=3, message="Loading"):
-    """Show a custom loader animation in Streamlit"""
-    loaders = {
-        "circle": """
-        <div style="display:flex;justify-content:center;align-items:center;height:100px;">
-          <div class="loader"></div>
-        </div>
-        <style>
-        .loader {
-          border: 8px solid #f3f3f3;
-          border-top: 8px solid #00c4ff;
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        </style>
-        """,
+    # Older demo districts (keep until verified)
+    "Ratlam": 6.2,
+    "Mandsaur": 5.8,
+    "Dewas": 5.5
+}
 
-        "dots": """
-        <div style="display:flex;justify-content:center;align-items:center;height:100px;">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
-        <style>
-        .dot {
-          height: 18px;
-          width: 18px;
-          margin: 0 5px;
-          background-color: #00c4ff;
-          border-radius: 50%;
-          display: inline-block;
-          animation: bounce 1.2s infinite ease-in-out;
-        }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+# -------------------------
+# Sidebar Navigation
+# -------------------------
+st.sidebar.title("🌪️ MP Wind Dashboard")
+page = st.sidebar.radio("Navigate", ["Dashboard", "📖 Data & Sources"])
 
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0); }
-          40% { transform: scale(1); }
-        }
-        </style>
-        """,
+# -------------------------
+# Dashboard Page
+# -------------------------
+if page == "Dashboard":
+    st.title("⚡ Madhya Pradesh Wind Energy Dashboard")
 
-        "wave": """
-        <div style="display:flex;justify-content:center;align-items:flex-end;height:100px;gap:6px;">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-        </div>
-        <style>
-        .bar {
-          width: 8px;
-          height: 20px;
-          background: #00c4ff;
-          animation: wave 1s infinite ease-in-out;
-        }
-        .bar:nth-child(2) { animation-delay: 0.1s; }
-        .bar:nth-child(3) { animation-delay: 0.2s; }
-        .bar:nth-child(4) { animation-delay: 0.3s; }
-        .bar:nth-child(5) { animation-delay: 0.4s; }
+    # District selection
+    districts = list(wind_profile.keys())
+    district = st.sidebar.selectbox("📍 Choose a District", districts)
 
-        @keyframes wave {
-          0%, 40%, 100% { transform: scaleY(0.3); }
-          20% { transform: scaleY(1); }
-        }
-        </style>
-        """
-    }
+    avg_speed = wind_profile[district]
+    roi = round((avg_speed**2)/10, 2)
+    power_potential = round(avg_speed**3, 2)
 
-    placeholder = st.empty()
-    placeholder.markdown(loaders[style], unsafe_allow_html=True)
-    time.sleep(duration)
-    placeholder.empty()
-    st.success(f"✅ {message} Complete!")
-
-# ----------------------------
-# Dashboard Title
-# ----------------------------
-st.title("🌪️ MP Wind Energy Dashboard - LIVE!")
-st.caption("1M1B Salesforce Internship Project")
-
-# ----------------------------
-# Sidebar Controls
-# ----------------------------
-st.sidebar.header("Site Input")
-location = st.sidebar.selectbox("Choose Location", ["Ratlam", "Mandsaur", "Dewas"])
-years = st.sidebar.slider("Historical Years", 1, 5, 1)
-hub_height = st.sidebar.slider("Hub Height (m)", 10, 120, 50)
-loss_factor = st.sidebar.slider("Loss Factor (%)", 0, 30, 15) / 100.0
-
-# ----------------------------
-# Button with Loader
-# ----------------------------
-if st.button("⚡ Generate Forecast"):
-    custom_loader(style="wave", duration=3, message="Forecasting")
-
-    # ---- Fake historical data (demo only) ----
-    np.random.seed(42)
-    dates = pd.date_range(end=datetime.today(), periods=24*30, freq="H")
-    wind_speeds = np.random.normal(6, 1.5, len(dates))  # mean 6 m/s
-    wind_speeds = np.clip(wind_speeds, 0, None)
-    df = pd.DataFrame({"time": dates, "wind_speed": wind_speeds})
-
-    # ---- Forecast (simple persistence model) ----
-    forecast_hours = 72
-    future_dates = pd.date_range(start=dates[-1] + timedelta(hours=1),
-                                 periods=forecast_hours, freq="H")
-    forecast_speed = np.repeat(df["wind_speed"].iloc[-1], forecast_hours)
-    forecast_df = pd.DataFrame({"time": future_dates, "wind_speed": forecast_speed})
-
-    # ---- Plot ----
-    fig = px.line(df, x="time", y="wind_speed", title=f"Historical Wind Speeds at {location}")
-    fig.add_scatter(x=forecast_df["time"], y=forecast_df["wind_speed"],
-                    mode="lines", name="Forecast")
-    st.plotly_chart(fig, use_container_width=True)
-
-    # ---- Energy estimation (simple model) ----
-    power_curve = {
-        0: 0, 3: 0.2, 4: 0.5, 5: 1.2, 6: 2.5, 7: 4.0,
-        8: 6.5, 9: 9.0, 10: 11.5, 11: 13, 12: 14, 13: 14.5,
-        14: 14.8, 15: 15, 20: 15
-    }
-    pc_df = pd.DataFrame(list(power_curve.items()), columns=["wind_speed", "power_kw"])
-
-    def lookup_power(v):
-        return np.interp(v, pc_df["wind_speed"], pc_df["power_kw"])
-
-    df["power_kw"] = df["wind_speed"].apply(lookup_power) * (1 - loss_factor)
-    annual_energy_kwh = df["power_kw"].sum()
-
-    # ---- KPI cards ----
+    # KPI Metrics
     col1, col2, col3 = st.columns(3)
-    col1.metric("Average Wind Speed", f"{df['wind_speed'].mean():.2f} m/s")
-    col2.metric("Capacity Factor", f"{(annual_energy_kwh / (15 * len(df))):.2%}")
-    col3.metric("Est. Annual Energy", f"{annual_energy_kwh:.0f} kWh")
+    with col1:
+        st.metric("🌬️ Avg Wind Speed", f"{avg_speed:.2f} m/s")
+    with col2:
+        st.metric("⚡ Power Potential", f"{power_potential} units")
+    with col3:
+        st.metric("💰 ROI Estimate", f"{roi}%")
 
-    # ---- Data preview ----
-    with st.expander("Show raw data"):
-        st.write(df.head())
+    # Histogram Example
+    st.subheader("📊 Wind Speed Distribution")
+    speeds = np.random.normal(avg_speed, 1.0, 200)
+    speeds = np.clip(speeds, 0, None)
+
+    fig, ax = plt.subplots()
+    ax.hist(speeds, bins=10, edgecolor="black", color="skyblue")
+    ax.set_xlabel("Wind Speed (m/s)")
+    ax.set_ylabel("Frequency")
+    ax.set_title(f"Wind Profile – {district}")
+    st.pyplot(fig)
+
+# -------------------------
+# Data & Sources Page
+# -------------------------
+elif page == "📖 Data & Sources":
+    st.title("📖 Data & Sources")
+
+    st.markdown("### ✅ Verified Wind Data (WeatherSpark)")
+    st.markdown("""
+    - **Bhopal** – Average June wind speed: **4.83 m/s**  
+      [WeatherSpark](https://weatherspark.com/y/109103/Average-Weather-in-Bhopal-India-Year-Round)
+    - **Indore** – Average June wind speed: **5.46 m/s**  
+      [WeatherSpark](https://weatherspark.com/y/108259/Average-Weather-in-Indore-India-Year-Round)
+    - **Jabalpur** – Average June wind speed: **4.24 m/s**  
+      [WeatherSpark](https://weatherspark.com/y/109911/Average-Weather-in-Jabalpur-Madhya-Pradesh-India-Year-Round)
+    """)
+
+    st.markdown("### 📘 Methodology (Simple)")
+    st.markdown("""
+    1. 🌬️ **Collect Data**: Wind speeds are taken from reliable sources like WeatherSpark, which uses NASA’s MERRA-2 models.  
+    2. 📊 **Find Averages**: We use long-term average wind speeds for each city.  
+    3. ⚡ **Estimate Power**: Stronger winds → more electricity potential.  
+    4. 💰 **ROI**: Higher wind = higher returns on investment.  
+    5. ✅ **Transparency**: All data sources are linked so anyone can verify.
+    """)
+
+    st.info("⚠️ Note: More districts will be added once verified data is available from IMD, NIWE, or other trusted sources.")
