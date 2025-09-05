@@ -41,15 +41,17 @@ def rupee(x):
         return "N/A"
 
 # -----------------------------
-# Styling (DeepSeek)
+# Styling (DeepSeek + colorful KPIs)
 # -----------------------------
 st.markdown("""
 <style>
     .main-header {font-size: 2.5rem; color: #1f77b4; margin-bottom: 1rem;}
-    .metric-card {background-color: #f0f2f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;}
+    .metric-card {background-color: #f0f2f6; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem; text-align:center;}
     .metric-value {font-size: 1.5rem; font-weight: bold; color: #1f77b4;}
     .metric-label {font-size: 0.9rem; color: #7f7f7f;}
     .footer {text-align: center; margin-top: 2rem; color: #7f7f7f; font-size: 0.8rem;}
+    .metric-card-energy {background: linear-gradient(90deg,#a1c4fd,#c2e9fb);}
+    .metric-card-finance {background: linear-gradient(90deg,#d4fc79,#96e6a1);}
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,18 +71,21 @@ with st.sidebar:
     st.markdown(f"**Baseline Wind Speed:** {district_row['Baseline_Wind_Speed(m/s)']} m/s")
     st.markdown(f"[Baseline Source]({district_row['Baseline_Source']})")
 
-    # Fetch realtime wind
+    # Fetch realtime wind with spinner
     realtime_wind_speed = district_row['Baseline_Wind_Speed(m/s)']  # default
-    try:
-        response = requests.get(district_row['Realtime_API'])
-        response.raise_for_status()
-        data_json = response.json()
-        if "hourly" in data_json and "windspeed_10m" in data_json["hourly"]:
-            realtime_wind_speed = data_json["hourly"]["windspeed_10m"][0]
-            st.markdown(f"**Realtime Wind (10m height):** {realtime_wind_speed:.1f} m/s")
-            st.markdown(f"[Realtime API]({district_row['Realtime_API']})")
-    except:
-        st.warning("Realtime wind not available, using baseline.")
+    with st.spinner(f"Fetching realtime wind for {selected_district}..."):
+        try:
+            response = requests.get(district_row['Realtime_API'], timeout=5)
+            response.raise_for_status()
+            data_json = response.json()
+            if "hourly" in data_json and "windspeed_10m" in data_json["hourly"]:
+                realtime_wind_speed = data_json["hourly"]["windspeed_10m"][0]
+                st.success(f"Realtime Wind (10m height): {realtime_wind_speed:.1f} m/s")
+                st.markdown(f"[Realtime API]({district_row['Realtime_API']})")
+            else:
+                st.warning("Realtime wind data unavailable, using baseline.")
+        except Exception as e:
+            st.error(f"Error fetching realtime wind, using baseline. ({e})")
 
     # Other financial parameters
     years = st.slider("Project Lifetime (Years)", 1, 25, 10)
@@ -89,7 +94,7 @@ with st.sidebar:
     om_cost_lakh_per_mw_per_year = st.number_input("O&M Cost (₹ lakhs / MW / year)", 1, 500, 25)
     tariff_rate_per_kwh = st.number_input("Electricity Tariff (₹ / kWh)", 0.5, 20.0, 4.5, step=0.1)
     st.markdown("---")
-    st.info("Adjust parameters and see financial projections for the selected district.")
+    st.info("Adjust parameters to see financial projections for the selected district.")
 
 # -----------------------------
 # Financial Calculations
@@ -161,7 +166,9 @@ with col2:
         ("Payback Period", f"{payback_years:.1f} years" if np.isfinite(payback_years) else "N/A")
     ]
     for label, value in metrics:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        # Use different colors for financial vs energy metrics
+        cls = "metric-card-energy" if label in ["Capacity Factor","Annual Energy Generation"] else "metric-card-finance"
+        st.markdown(f'<div class="metric-card {cls}">', unsafe_allow_html=True)
         st.markdown(f'<p class="metric-label">{label}</p>', unsafe_allow_html=True)
         st.markdown(f'<p class="metric-value">{value}</p>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -174,7 +181,7 @@ expander = st.expander("Methodology & Sources")
 with expander:
     st.markdown(f"""
 **How it works:**
-- Baseline wind speed from WeatherSpark: [{district_row['Baseline_Source']}]({district_row['Baseline_Source']})
+- Baseline wind speed from WeatherSpark (MP districts): [{district_row['Baseline_Source']}]({district_row['Baseline_Source']})
 - Realtime wind via Open-Meteo API: [{district_row['Realtime_API']}]({district_row['Realtime_API']})
 - Capacity factor CF ≈ 0.35 × (V_avg / 12 m/s)
 - Annual Energy (MWh) = MW × 8760 × CF
